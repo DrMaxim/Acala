@@ -3140,6 +3140,7 @@ dependencies = [
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "module-dex-rpc-runtime-api",
+ "module-support",
  "parity-scale-codec",
  "serde",
  "sp-api",
@@ -3151,6 +3152,7 @@ dependencies = [
 name = "module-dex-rpc-runtime-api"
 version = "0.5.1"
 dependencies = [
+ "module-support",
  "parity-scale-codec",
  "serde",
  "sp-api",

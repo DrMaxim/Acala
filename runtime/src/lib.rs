@@ -1240,6 +1240,14 @@ impl_runtime_apis! {
 				amount: Dex::get_target_amount_available(supply_currency_id, target_currency_id, supply_currency_amount)
 			}
 		}
+
+		fn get_exchange_slippage(
+			supply_currency_id: CurrencyId,
+			target_currency_id: CurrencyId,
+			supply_amount: Balance,
+		) -> Option<Ratio> {
+			Dex::get_exchange_slippage(supply_currency_id, target_currency_id, supply_amount)
+		}
 	}
 
 	impl module_staking_pool_rpc_runtime_api::StakingPoolApi<

@@ -14,3 +14,4 @@ sp-runtime = { version = "2.0.0-rc4" }
 sp-api = { version = "2.0.0-rc4" }
 sp-blockchain = { version = "2.0.0-rc4" }
 module-dex-rpc-runtime-api = { path = "runtime-api" }
+support = { package = "module-support", path = "../../support", default-features = false }

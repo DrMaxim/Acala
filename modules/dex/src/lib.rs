@@ -826,43 +826,8 @@ impl<T: Trait> Module<T> {
 			}
 		}
 	}
-}
 
-impl<T: Trait> DEXManager<T::AccountId, CurrencyId, Balance> for Module<T> {
-	fn get_target_amount(
-		supply_currency_id: CurrencyId,
-		target_currency_id: CurrencyId,
-		supply_currency_amount: Balance,
-	) -> Balance {
-		Self::get_target_amount_available(supply_currency_id, target_currency_id, supply_currency_amount)
-	}
-
-	fn get_supply_amount(
-		supply_currency_id: CurrencyId,
-		target_currency_id: CurrencyId,
-		target_currency_amount: Balance,
-	) -> Balance {
-		Self::get_supply_amount_needed(supply_currency_id, target_currency_id, target_currency_amount)
-	}
-
-	fn exchange_currency(
-		who: T::AccountId,
-		supply_currency_id: CurrencyId,
-		supply_amount: Balance,
-		target_currency_id: CurrencyId,
-		acceptable_target_amount: Balance,
-	) -> sp_std::result::Result<Balance, DispatchError> {
-		Self::do_exchange(
-			&who,
-			supply_currency_id,
-			supply_amount,
-			target_currency_id,
-			acceptable_target_amount,
-		)
-	}
-
-	// do not consider the fee rate
-	fn get_exchange_slippage(
+	pub fn get_exchange_slippage(
 		supply_currency_id: CurrencyId,
 		target_currency_id: CurrencyId,
 		supply_amount: Balance,
@@ -909,6 +874,48 @@ impl<T: Trait> DEXManager<T::AccountId, CurrencyId, Balance> for Module<T> {
 				.and_then(|n| n.checked_mul(&base_to_target_slippage))
 				.and_then(|n| n.checked_add(&supply_to_base_slippage))
 		}
+	}
+}
+
+impl<T: Trait> DEXManager<T::AccountId, CurrencyId, Balance> for Module<T> {
+	fn get_target_amount(
+		supply_currency_id: CurrencyId,
+		target_currency_id: CurrencyId,
+		supply_currency_amount: Balance,
+	) -> Balance {
+		Self::get_target_amount_available(supply_currency_id, target_currency_id, supply_currency_amount)
+	}
+
+	fn get_supply_amount(
+		supply_currency_id: CurrencyId,
+		target_currency_id: CurrencyId,
+		target_currency_amount: Balance,
+	) -> Balance {
+		Self::get_supply_amount_needed(supply_currency_id, target_currency_id, target_currency_amount)
+	}
+
+	fn exchange_currency(
+		who: T::AccountId,
+		supply_currency_id: CurrencyId,
+		supply_amount: Balance,
+		target_currency_id: CurrencyId,
+		acceptable_target_amount: Balance,
+	) -> sp_std::result::Result<Balance, DispatchError> {
+		Self::do_exchange(
+			&who,
+			supply_currency_id,
+			supply_amount,
+			target_currency_id,
+			acceptable_target_amount,
+		)
+	}
+
+	fn get_exchange_slippage(
+		supply_currency_id: CurrencyId,
+		target_currency_id: CurrencyId,
+		supply_amount: Balance,
+	) -> Option<Ratio> {
+		Self::get_exchange_slippage(supply_currency_id, target_currency_id, supply_amount)
 	}
 }
 

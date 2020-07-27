@@ -12,6 +12,7 @@ use sp_runtime::{
 	traits::{Block as BlockT, MaybeDisplay, MaybeFromStr},
 };
 use std::sync::Arc;
+use support::Ratio;
 
 pub use self::gen_client::Client as DexClient;
 pub use module_dex_rpc_runtime_api::DexApi as DexRuntimeApi;
@@ -42,6 +43,15 @@ pub trait DexApi<BlockHash, CurrencyId, Balance, ResponseType> {
 		supply_currency_amount: BalanceRequest<Balance>,
 		at: Option<BlockHash>,
 	) -> Result<ResponseType>;
+
+	#[rpc(name = "dex_getExchangeSlipperage")]
+	fn get_exchange_slippage(
+		&self,
+		supply_currency_id: CurrencyId,
+		target_currency_id: CurrencyId,
+		supply_amount: BalanceRequest<Balance>,
+		at: Option<BlockHash>,
+	) -> Result<Option<Ratio>>;
 }
 
 /// A struct that implements the [`DexApi`].
@@ -120,6 +130,27 @@ where
 			.map_err(|e| RpcError {
 				code: ErrorCode::ServerError(Error::RuntimeError.into()),
 				message: "Unable to get target amount.".into(),
+				data: Some(format!("{:?}", e).into()),
+			})
+	}
+
+	fn get_exchange_slippage(
+		&self,
+		supply_currency_id: CurrencyId,
+		target_currency_id: CurrencyId,
+		supply_amount: BalanceRequest<Balance>,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> Result<Option<Ratio>> {
+		let api = self.client.runtime_api();
+		let at = BlockId::hash(at.unwrap_or_else(||
+			// If the block hash is not supplied assume the best block.
+			self.client.info().best_hash));
+		let BalanceRequest { amount } = supply_amount;
+
+		api.get_exchange_slippage(&at, supply_currency_id, target_currency_id, amount)
+			.map_err(|e| RpcError {
+				code: ErrorCode::ServerError(Error::RuntimeError.into()),
+				message: "Unable to get exchange slippage.".into(),
 				data: Some(format!("{:?}", e).into()),
 			})
 	}

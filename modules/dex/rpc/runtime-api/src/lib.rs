@@ -10,6 +10,7 @@ use codec::{Codec, Decode, Encode};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sp_runtime::traits::{MaybeDisplay, MaybeFromStr};
 use sp_std::prelude::*;
+use support::Ratio;
 
 #[derive(Eq, PartialEq, Encode, Decode, Default)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
@@ -50,5 +51,11 @@ sp_api::decl_runtime_apis! {
 			target_currency_id: CurrencyId,
 			supply_currency_amount: Balance,
 		) -> BalanceInfo<Balance>;
+
+		fn get_exchange_slippage(
+			supply_currency_id: CurrencyId,
+			target_currency_id: CurrencyId,
+			supply_amount: Balance,
+		) -> Option<Ratio>;
 	}
 }
