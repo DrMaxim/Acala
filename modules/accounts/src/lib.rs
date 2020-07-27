@@ -8,7 +8,7 @@
 
 use codec::{Decode, Encode};
 use frame_support::{
-	decl_error, decl_module, decl_storage,
+	debug, decl_error, decl_module, decl_storage,
 	dispatch::{DispatchResult, Dispatchable},
 	ensure,
 	traits::{
@@ -307,26 +307,70 @@ impl<T: Trait> OnReceived<T::AccountId, CurrencyId, Balance> for Module<T> {
 				&& T::DEX::get_exchange_slippage(currency_id, native_currency_id, supply_amount_needed)
 					.map_or(false, |s| s <= T::MaxSlippageSwapWithDEX::get())
 			{
-				if amount >= supply_amount_needed
-					&& T::DEX::exchange_currency(
+				if amount >= supply_amount_needed {
+					if let Err(err) = T::DEX::exchange_currency(
 						who.clone(),
 						currency_id,
 						supply_amount_needed,
 						native_currency_id,
 						new_account_deposit,
-					)
-					.is_ok()
-				{
-					// successful swap will cause changes in native currency,
-					// which also means that it will open a new account
+					) {
+						debug::error!(
+							target: "account module -- onreceived",
+							"exchange currency failed: \nsupply_currency_id: {:?} \n supply_amount_needed: {:?} \n target_currency_id: {:?} \n acceptable_target_currency_amount: {:?} \n error: {:?}",
+							currency_id,
+							supply_amount_needed,
+							native_currency_id,
+							new_account_deposit,
+							err
+						);
+
+						let treasury_account = Self::treasury_account_id();
+						if *who != treasury_account {
+							let _ = <T as Trait>::Currency::transfer(currency_id, who, &treasury_account, amount);
+						}
+					}
 				} else {
-					// open account will fail because there's no enough native token,
-					// transfer all token as dust to treasury account.
+					debug::error!(
+						target: "account module -- onreceived",
+						"amount is not enough: \n amount: {:?} \n supply_amount_needed: {:?}",
+						amount,
+						supply_amount_needed,
+					);
+
 					let treasury_account = Self::treasury_account_id();
 					if *who != treasury_account {
 						let _ = <T as Trait>::Currency::transfer(currency_id, who, &treasury_account, amount);
 					}
 				}
+
+			// // open account will fail because there's no enough native token,
+			// // transfer all token as dust to treasury account.
+			// let treasury_account = Self::treasury_account_id();
+			// if *who != treasury_account {
+			// 	let _ = <T as Trait>::Currency::transfer(currency_id, who, &treasury_account, amount);
+			// }
+
+			// if amount >= supply_amount_needed
+			// 	&& T::DEX::exchange_currency(
+			// 		who.clone(),
+			// 		currency_id,
+			// 		supply_amount_needed,
+			// 		native_currency_id,
+			// 		new_account_deposit,
+			// 	)
+			// 	.is_ok()
+			// {
+			// 	// successful swap will cause changes in native currency,
+			// 	// which also means that it will open a new account
+			// } else {
+			// 	// open account will fail because there's no enough native token,
+			// 	// transfer all token as dust to treasury account.
+			// 	let treasury_account = Self::treasury_account_id();
+			// 	if *who != treasury_account {
+			// 		let _ = <T as Trait>::Currency::transfer(currency_id, who, &treasury_account, amount);
+			// 	}
+			// }
 			} else {
 				// Don't recycle non-native token to avoid unreasonable loss due to insufficient liquidity of DEX,
 				// can try to open this account again later. This may leave some dust account data of non-native token,
